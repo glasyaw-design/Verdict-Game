@@ -81,6 +81,11 @@ button:focus-visible,.clue:focus-visible,input:focus-visible,select:focus-visibl
 .sopts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
 .sopts.two{grid-template-columns:repeat(2,minmax(0,1fr))}
 .setup label.sopt{display:block;cursor:pointer;color:var(--fg);font-size:inherit;position:relative}
+.tname{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:10px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
+.tname input{background:var(--panel-2);border:1px solid var(--line);color:var(--fg);padding:7px 10px;width:8.5em;font:inherit;font-size:15px;text-align:center}
+.tname input:focus{outline:2px solid var(--brass);outline-offset:1px}
+.tname #tnok{min-width:3.5em;font-size:12px;color:var(--good,#7fb07f)}
+.overlay .tnhint{font-size:12px;color:var(--muted);margin:0 0 0 2px;max-width:none}
 .setname{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:6px;font-size:13px;color:var(--muted)}
 .setname input{background:var(--panel-2);border:1px solid var(--line);color:var(--fg);padding:6px 8px;width:8em;font:inherit}
 .sopt input{position:absolute;opacity:0;width:1px;height:1px}
@@ -25971,16 +25976,24 @@ function resultHTML(){
 
 /* ═════════ 흐름 ═════════ */
 const overlay=$('#overlay'),modal=$('#modal');
+const cleanJName=v=>String(v||'').replace(/[<>"'&\\/`]/g,'').replace(/\s+/g,' ').trim().slice(0,6);
+function playerName(){const n=store.get('verdict-name');if(n)return n;const sv=store.get('verdict-save2');return (sv&&sv.name)||''}
+function setPlayerName(v){const n=cleanJName(v);if(!n)return '';store.set('verdict-name',n);const sv=store.get('verdict-save2');if(sv&&sv.history){sv.name=n;store.set('verdict-save2',sv)}if(!S.mode&&S.phase==='title')S.name=n;return n}
+const pName=()=>playerName()||'한결';
 function titleScreen(){
- S.phase='title';S.cs=null;overlay.hidden=false;const sv=store.get('verdict-save2');const canCont=sv&&sv.history&&(sv.history.length>0||sv.cur);
- overlay.innerHTML=`<div><div class="kicker">대한민국 형사법정</div><h2>판결의 무게</h2><p>신임 형사단독 판사로 첫 출근한 날입니다. 배당된 사건을 고르고, 기록을 읽고, 신문하고, 법과 판례에 따라 형을 정하세요. 보직마다 정해진 건수를 처리하면 인사 평가를 받습니다. 사건은 모두 ${CASES.length}건이라 경력마다 만나는 사건이 다릅니다.</p>
+ S.phase='title';S.cs=null;overlay.hidden=false;const sv=store.get('verdict-save2');const pName0=playerName();const canCont=sv&&sv.history&&(sv.history.length>0||sv.cur);
+ overlay.innerHTML=`<div><div class="kicker">대한민국 형사법정</div><h2>판결의 무게</h2><p>신임 형사단독 판사로 첫 출근한 날입니다. 기록을 읽고, 신문하고, 법과 판례에 따라 형을 정하세요. 보직마다 정해진 건수를 처리하면 인사 평가를 받습니다. 사건은 모두 ${CASES.length}건입니다.</p>
+ <div class="tname"><label for="tname">판사 이름</label><input id="tname" maxlength="6" placeholder="한결" autocomplete="off" value="${pName0.replace(/"/g,'')}"><span class="hint tnhint" id="tnhint">${pName0?'경력과 랭킹에 쓰이는 이름입니다.':'처음이라면 이름부터 정해 주세요.'}</span><span id="tnok" aria-live="polite"></span></div>
  <div class="row"><button class="btn primary" id="newg">새 경력 시작</button>${canCont?`<button class="btn" id="cont">이어하기 · ${sv.history.length}건 처리${sv.cur?' (재판 중)':''}</button>`:''}<button class="btn" id="impt">다른 기기에서 이어하기</button></div>
  <div class="row" style="margin-top:4px">${dailyCard()}${weeklyCard()}</div><div class="row" style="margin-top:4px"><button class="btn" id="quizb">증거 퀴즈 (연습)</button><button class="btn" id="rankb">랭킹</button>${typeof devList==='function'?'<button class="btn" id="devb" style="border-style:dashed;color:var(--info)">개발자 모드</button>':''}</div>${canCont?'<p style="font-size:12.5px;color:var(--muted)">새 경력을 시작하면 이전 진행은 지워집니다.</p>':''}</div>`;
- $('#newg').onclick=()=>{sfx('click');setupModal(sv)};
- if(canCont)$('#cont').onclick=()=>{sfx('click');loadSave(sv)};
+ const tn=$('#tname');let tnT=0;const tnSave=()=>{const n=setPlayerName(tn.value);if(!n&&!tn.value.trim()){tn.value=playerName();return}if(n){tn.value=n;if(sv&&sv.history)sv.name=n;$('#tnok').textContent='저장됨';clearTimeout(tnT);tnT=setTimeout(()=>{const o=$('#tnok');if(o)o.textContent=''},1400);$('#tnhint').textContent='경력과 랭킹에 쓰이는 이름입니다.';renderHud()}};
+ tn.addEventListener('change',tnSave);tn.addEventListener('blur',tnSave);tn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();tnSave();tn.blur()}});
+ const tnFirst=()=>{if(tn.value.trim())tnSave()};
+ $('#newg').onclick=()=>{sfx('click');tnFirst();setupModal(store.get('verdict-save2'))};
+ if(canCont)$('#cont').onclick=()=>{sfx('click');tnFirst();loadSave(store.get('verdict-save2'))};
  $('#impt').onclick=()=>{sfx('click');saveManager('import')};
- $('#daily').onclick=()=>{sfx('gavel');dailyStart()};
- $('#weekly').onclick=()=>{sfx('gavel');weeklyStart()};$('#quizb').onclick=()=>{sfx('page');quizStart()};$('#rankb').onclick=()=>{sfx('page');showRanking(()=>titleScreen())};
+ $('#daily').onclick=()=>{sfx('gavel');tnFirst();dailyStart()};
+ $('#weekly').onclick=()=>{sfx('gavel');tnFirst();weeklyStart()};$('#quizb').onclick=()=>{sfx('page');tnFirst();quizStart()};$('#rankb').onclick=()=>{sfx('page');showRanking(()=>titleScreen())};
  if($('#devb'))$('#devb').onclick=()=>{sfx('click');devList()};
  idle('개정을 기다리는 중입니다.');renderHud();renderRec();renderBench();
 }
@@ -25992,12 +26005,12 @@ function setupHTML(sv){const cd=(sv&&sv.diff)||S.diff||'normal',cl=(sv&&sv.len)|
  <p class="hint" id="setupsum"></p></div>`}
 function setupModal(sv){
  modal.hidden=false;modal.innerHTML=`<div class="card wide" role="dialog" aria-modal="true" aria-label="새 경력 설정"><div class="ch"><h3>새 경력 설정</h3><span>사건 ${CASES.length}건</span></div><div class="cb">
- <div class="setname"><label for="jname">판사 이름</label><input id="jname" maxlength="6" value="${(sv&&sv.name||S.name||'한결').replace(/"/g,'')}"></div>${setupHTML(sv)}
+ <div class="setname"><label for="jname">판사 이름</label><input id="jname" maxlength="6" value="${(playerName()||(sv&&sv.name)||'').replace(/"/g,'')}" placeholder="한결"></div>${setupHTML(sv)}
  ${sv&&sv.history&&sv.history.length?'<p class="hint" style="text-align:center;margin:6px 0 0;color:var(--hot)">새 경력을 시작하면 이어하던 경력은 지워집니다.</p>':''}</div>
  <div class="cf"><button class="btn" id="sgback">취소</button><button class="btn primary" id="sggo">이 설정으로 시작</button></div></div>`;
  bindSetup();modal.scrollTop=0;
  $('#sgback').onclick=()=>{sfx('click');modal.hidden=true};
- $('#sggo').onclick=()=>{sfx('gavel');const v=n=>(modal.querySelector(`input[name="${n}"]:checked`)||{}).value;modal.hidden=true;newCareer((($('#jname').value||'').replace(/[<>"'&]/g,'').trim()||'한결').slice(0,6),v('jdiff')||'normal',v('jlen')||'normal',v('jdock')||'prog');save();docket()};
+ $('#sggo').onclick=()=>{sfx('gavel');const v=n=>(modal.querySelector(`input[name="${n}"]:checked`)||{}).value;modal.hidden=true;newCareer(setPlayerName($('#jname').value)||'한결',v('jdiff')||'normal',v('jlen')||'normal',v('jdock')||'prog');save();docket()};
  $('#sggo').focus({preventScroll:true});
 }
 function bindSetup(){const sum=()=>{const v=n=>(modal.querySelector(`input[name="${n}"]:checked`)||{}).value;const d=DIFF[v('jdiff')]||DIFF.normal,l=LEN[v('jlen')]||LEN.normal;const el=$('#setupsum');if(el)el.textContent=`${d.label}: ${d.desc}. ${l.label}(${l.sub}) · ${v('jdock')==='rand'?'무작위 배당':'점점 어렵게 배당'} · 사건 ${CASES.length}건 중 처음 보는 사건을 먼저 배당합니다. 처음이라면 수습 · 단기나 표준을 권합니다.`};
@@ -26120,7 +26133,7 @@ function dailyInfo(){const log=store.get('verdict-daily')||{},key=dayKey();let s
 function dailyCard(){const d=dailyInfo(),c=d.c;return `<button class="btn" id="daily" style="text-align:left;line-height:1.5"><b style="color:var(--brass)">오늘의 사건 · ${d.label}</b><br><small style="color:var(--muted)">${['형사단독','형사합의부','항소심'][c.tier]} · 난도 ${c.stars}/10${c.counts?' · 복합 범죄':''} · ${d.today==null?'아직 도전하지 않음':'오늘 기록 '+d.today+'점'}${d.streak?` · 연속 ${d.streak}일`:''}</small></button>`}
 function dailyStart(){
  const d=dailyInfo();S.mode='daily';
- Object.assign(S,{name:(store.get('verdict-save2')||{}).name||S.name||'한결',diff:'normal',len:'normal',history:[],rep:50,rank:Math.min(2,d.c.tier),tier:d.c.tier,grave:0,graveT:0,perks:{q:0,shield:0,insight:0},stats:{},tutDone:true});
+ Object.assign(S,{name:pName(),diff:'normal',len:'normal',history:[],rep:50,rank:Math.min(2,d.c.tier),tier:d.c.tier,grave:0,graveT:0,perks:{q:0,shield:0,insight:0},stats:{},tutDone:true});
  startCase(d.c.idx);toast('오늘의 사건 · 경력과 별개로 기록됩니다');
 }
 function dailyRecord(res){const log=store.get('verdict-daily')||{},k=dayKey();const first=log[k]==null;if(first)setTimeout(()=>submitDailyRank(res.total),0);log[k]=Math.max(log[k]||0,res.total);store.set('verdict-daily',log);
@@ -26149,7 +26162,7 @@ function weeklyCases(key=weekKey()){const pick=(pool,salt)=>pool[hashStr('wk:'+k
 function weeklyInfo(){const key=weekKey(),log=store.get('verdict-weekly')||{};const [y,w]=key.split('-W');return {key,best:log[key],label:`${y}년 ${+w}주`,list:weeklyCases(key)}}
 function weeklyCard(){const w=weeklyInfo();return `<button class="btn" id="weekly" style="text-align:left;line-height:1.5;border-color:#6a2a2a"><b style="color:var(--hot)">주간 챌린지 · 중대 사건 3연전</b><br><small style="color:var(--muted)">${w.label} · 원로 규칙 · ${w.best==null?'아직 도전하지 않음':'이번 주 최고 '+w.best+'점'}</small></button>`}
 function weeklyStart(){const w=weeklyInfo();S.mode='weekly';S.wk={key:w.key,label:w.label,list:w.list,at:0,scores:[]};
- Object.assign(S,{name:(store.get('verdict-save2')||{}).name||S.name||'한결',diff:'hard',len:'normal',history:[],rep:50,grave:0,graveT:0,perks:{q:0,shield:0,insight:0},stats:{},tutDone:true});
+ Object.assign(S,{name:pName(),diff:'hard',len:'normal',history:[],rep:50,grave:0,graveT:0,perks:{q:0,shield:0,insight:0},stats:{},tutDone:true});
  weeklyCase()}
 function weeklyCase(){const i=S.wk.list[S.wk.at],c=CASES[i];S.rank=Math.min(2,c.tier);S.tier=c.tier;startCase(i);toast(`주간 챌린지 ${S.wk.at+1}/3 · ${['형사단독','형사합의부','항소심'][c.tier]}`)}
 function weeklyNext(){if(!S.wk){titleScreen();return}if(S.wk.at<2){S.wk.at++;weeklyCase();return}weeklyEnd()}
@@ -26163,7 +26176,7 @@ function weeklyEnd(){const w=S.wk,tot=w.scores.reduce((a,b)=>a+(b||0),0),log=sto
  const fin=()=>{lockModal=false;modal.hidden=true;S.mode=null;S.cs=null;S.wk=null};
  $('#whome').focus();$('#whome').onclick=()=>{sfx('click');fin();titleScreen()};$('#wagain').onclick=()=>{sfx('click');fin();weeklyStart()};
  $('#wrk').onclick=()=>{sfx('page');fin();RKV.tab='weekly';showRanking(()=>titleScreen())};
- RANK.submit('weekly',{week:w.key,name:S.name,score:tot,scores:w.scores}).then(r=>{const el=$('#wrank');if(el&&r&&r.ok)el.textContent=r.rank?`주간 랭킹 ${r.rank}위${r.improved===false?' (이번 주 최고 기록 유지)':''}`:'주간 랭킹에 등록했습니다.'}).catch(()=>{})}
+ RANK.submit('weekly',{week:w.key,name:pName(),score:tot,scores:w.scores}).then(r=>{const el=$('#wrank');if(el&&r&&r.ok)el.textContent=r.rank?`주간 랭킹 ${r.rank}위${r.improved===false?' (이번 주 최고 기록 유지)':''}`:'주간 랭킹에 등록했습니다.'}).catch(()=>{})}
 
 /* ── 증거 퀴즈(연습): 여러 사건의 증거 10개를 채택·배제로 가려낸다 ── */
 let QZ=null;
@@ -26201,7 +26214,7 @@ function quizEnd(){const q=QZ,sec=Math.max(1,Math.round((Date.now()-q.t0)/1000))
  <div class="cf"><button class="btn" id="qagain">다시 하기</button><button class="btn" id="qrk">랭킹 보기</button><button class="btn primary" id="qhome">처음 화면으로</button></div></div>`;
  $('#qhome').focus();$('#qhome').onclick=()=>{sfx('click');QZ=null;modal.hidden=true;titleScreen()};$('#qagain').onclick=()=>{sfx('click');quizStart()};
  $('#qrk').onclick=()=>{sfx('page');RKV.tab='quiz';showRanking(()=>titleScreen())};
- RANK.submit('quiz',{name:(store.get('verdict-save2')||{}).name||S.name||'한결',ok:q.ok,sec}).then(r=>{const el=$('#qrank');if(el&&r&&r.ok)el.textContent=r.rank?`증거 퀴즈 랭킹 ${r.rank}위${r.improved===false?' (최고 기록 유지)':''}`:'증거 퀴즈 랭킹에 등록했습니다.'}).catch(()=>{})}
+ RANK.submit('quiz',{name:pName(),ok:q.ok,sec}).then(r=>{const el=$('#qrank');if(el&&r&&r.ok)el.textContent=r.rank?`증거 퀴즈 랭킹 ${r.rank}위${r.improved===false?' (최고 기록 유지)':''}`:'증거 퀴즈 랭킹에 등록했습니다.'}).catch(()=>{})}
 
 
 /* ── 판례집: 한 번 이상 판결한 사건의 정답 해설을 다시 읽는다 ── */
@@ -26384,7 +26397,7 @@ function careerRankEntry(){const pts=careerPts();return {len:S.len||'normal',nam
 async function submitCareerRank(){if(S.mode)return;const e=careerRankEntry();const score=Math.round(e.pts*(RANK_DIFF[e.diff]||1));addMyRank(Object.assign({},e,{score,date:dayKey()}));
  const el=document.getElementById('erank');if(el)el.textContent='랭킹에 등록하는 중…';
  try{const r=await RANK.submit('career',e);if(!el)return;if(r&&r.ok&&r.rank)el.textContent=`${LEN[e.len].label} 랭킹 ${r.rank}위 · 랭킹 점수 ${score}${r.improved===false?' (기존 최고 기록 유지)':''}`;else if(r&&r.ok)el.textContent=`랭킹에 등록했습니다 · 랭킹 점수 ${score}`;else el.textContent=RANK.mode==='none'?`이 기기의 내 기록에 저장했습니다 · 랭킹 점수 ${score}`:'랭킹 등록에 실패했습니다. 내 기록에는 저장했습니다.'}catch(err){if(el)el.textContent='랭킹 서버에 연결하지 못했습니다. 내 기록에는 저장했습니다.'}}
-async function submitDailyRank(total){const k=dayKey();try{const r=await RANK.submit('daily',{date:k,name:(store.get('verdict-save2')||{}).name||S.name||'한결',score:total,no:C().no});if(r&&r.ok){DRMSG=r.first===false?'오늘의 사건 랭킹은 첫 도전만 기록됩니다.':r.rank?`오늘의 사건 랭킹 ${r.rank}위`:'오늘의 사건 랭킹에 등록했습니다.';const el=document.getElementById('drank');if(el)el.textContent=DRMSG}}catch(e){}}
+async function submitDailyRank(total){const k=dayKey();try{const r=await RANK.submit('daily',{date:k,name:pName(),score:total,no:C().no});if(r&&r.ok){DRMSG=r.first===false?'오늘의 사건 랭킹은 첫 도전만 기록됩니다.':r.rank?`오늘의 사건 랭킹 ${r.rank}위`:'오늘의 사건 랭킹에 등록했습니다.';const el=document.getElementById('drank');if(el)el.textContent=DRMSG}}catch(e){}}
 let DRMSG='';
 let RKV={tab:'career',len:'normal'};
 async function showRanking(onClose){const tabs=[['career','경력'],['daily','오늘의 사건'],['weekly','주간 챌린지'],['quiz','증거 퀴즈'],['mine','내 기록']];const RK=['단독 판사','부장판사','고법 판사','고법 부장','대법관 후보'];
@@ -26442,7 +26455,7 @@ rec.addEventListener('click',e=>{if(!MOB())return;if(e.target.closest('[data-doc
 document.querySelectorAll('.tab[data-tab]').forEach(t=>t.addEventListener('click',()=>{if(!MOB())return;const p=document.querySelector('.desk>.panel');setTimeout(()=>{if(p.getBoundingClientRect().top<0)goTo(p)},0)}));
 /* ── 업데이트 내역 ── */
 const CHANGELOG=[
- {v:'2.7',d:'2026. 10. 16.',t:'랭킹 · 주간 챌린지 · 증거 퀴즈',items:['랭킹이 생겼습니다. 처음 화면과 위쪽의 랭킹 버튼에서 경력·오늘의 사건·주간 챌린지·증거 퀴즈 순위와 내 기록을 볼 수 있습니다. 경력은 징계 없이 끝까지 마치면 경력 길이별로 등록되고, 오늘의 사건은 그날 첫 도전만 올라갑니다.','새 콘텐츠 「주간 챌린지」: 매주 월요일 중대 사건 3건이 정해집니다. 모두 같은 사건을 어려움 난이도로 이어서 심리하고 합계 점수로 겨룹니다. 경력과 평판에는 영향이 없습니다.','새 콘텐츠 「증거 퀴즈」: 여러 사건에서 뽑은 증거와 상대방 의견을 보고 채택할지 배제할지 연달아 고르는 짧은 연습입니다. 답을 고르면 바로 이유가 나옵니다.','온라인 랭킹 서버가 있는 배포판을 따로 준비했습니다. 연결되지 않은 곳에서는 이 기기 기록만 보입니다.','새 업적이 추가되었습니다.']},
+ {v:'2.7',d:'2026. 10. 16.',t:'랭킹 · 주간 챌린지 · 증거 퀴즈',items:['랭킹이 생겼습니다. 처음 화면과 위쪽의 랭킹 버튼에서 경력·오늘의 사건·주간 챌린지·증거 퀴즈 순위와 내 기록을 볼 수 있습니다. 경력은 징계 없이 끝까지 마치면 경력 길이별로 등록되고, 오늘의 사건은 그날 첫 도전만 올라갑니다.','새 콘텐츠 「주간 챌린지」: 매주 월요일 중대 사건 3건이 정해집니다. 모두 같은 사건을 어려움 난이도로 이어서 심리하고 합계 점수로 겨룹니다. 경력과 평판에는 영향이 없습니다.','새 콘텐츠 「증거 퀴즈」: 여러 사건에서 뽑은 증거와 상대방 의견을 보고 채택할지 배제할지 연달아 고르는 짧은 연습입니다. 답을 고르면 바로 이유가 나옵니다.','온라인 랭킹 서버가 있는 배포판을 따로 준비했습니다. 연결되지 않은 곳에서는 이 기기 기록만 보입니다.','새 업적이 추가되었습니다.','처음 화면에서 판사 이름을 바로 정하고 언제든 바꿀 수 있습니다. 경력·오늘의 사건·주간 챌린지·증거 퀴즈와 랭킹에 같은 이름이 쓰입니다.']},
  {v:'2.6',d:'2026. 10. 15.',t:'증거 인부 · 재범 위험성 · 중형 사건',items:['증거 채부 단계에서 증거마다 상대방 의견(인부)이 보입니다. 검사가 낸 증거에는 피고인·변호인 의견(동의, 부동의, 내용 부인, 위법수집 주장, 임의성 다툼, 증명력 다툼 등)이, 피고인 측이 낸 증거에는 검사 의견이 붙습니다. 기록 열람 화면, 선고 결과, 판례집에도 표시됩니다.','인부와 증거능력은 다릅니다. 상대방이 다투지만 실제로는 증거능력이 있는 함정 증거를 크게 늘렸습니다. 공문서·업무 문서(제315조), 임의제출 영상, 영장으로 받은 자료, 대화 당사자의 녹음 등이 대표적입니다. 틀리면 결과 화면에 "인부 판단" 이유가 나옵니다.','새 양형 인자: 재범 위험성 높음(일반가중), 재범 위험성 낮음(일반감경). 여러 사건에 기록 근거와 함께 정답 인자로 들어갔고, 누범·전과를 두 번 세는 함정도 있습니다.','무거운 형이 정답인 중대 사건을 늘렸습니다. 합의부(보험금 살인, 강도살인, 연쇄 방화치사, 보복살인 등)와 항소심에 새 사건이 들어왔습니다.','법원별 형 쏠림을 완화했습니다. 항소심·합의부에서 벌금도 정답으로 인정되는 사건이 늘었고, 단독 벌금 사건 일부는 징역 집행유예도 정답으로 인정합니다.','대법정 난이도에서는 인부 의견 문구 없이 결과만 보입니다.','증거 채부가 어려워진 만큼 인사 기준과 평판 상승을 조금 완화했습니다.','증거 설명이 법리상 부족했던 곳과 새 사건 검수에서 찾은 오류를 바로잡았습니다.']},
  {v:'2.5',d:'2026. 10. 15.',t:'모바일 화면 이동',items:['휴대폰에서 재판 중 화면 아래에 이동 버튼(법정 · 기록 · 판단 · 위로)이 생겼습니다. 누르면 그 위치로 바로 이동하고, 지금 보고 있는 곳이 표시됩니다.','신문하면 대사창으로 자동 이동하고, 대사가 끝나면 보던 판단 화면으로 돌아옵니다. 이의 결정이나 선고 결과도 바로 보이는 곳으로 이동합니다.','판단 단계를 바꾸면 판단 절차 맨 위로 이동합니다.','창(배당표·판례집·설정 등)을 열면 뒤 화면이 따라 움직이지 않고, 새 창은 항상 맨 위부터 보입니다.','휴대폰에서 위쪽 메뉴·평판 정보·사건 정보를 한 줄로 줄여 화면을 넓게 쓰도록 했습니다. 옆으로 밀면 나머지가 보입니다.']},
  {v:'2.4',d:'2026. 10. 15.',t:'사건 대폭 확장 · 새 경력 설정',items:['사건을 크게 늘렸습니다. 새 사건은 생활 범죄·교통·온라인·노동·식품의료·강도·살인·방화·경제·마약·보이스피싱·뇌물·산재·증거법·항소심 쟁점별로 나눠 썼고, 복합 범죄 사건도 늘었습니다.','난이도를 수습 · 표준 · 원로 · 대법정으로 바꿨습니다. 어려울수록 신문 기회가 줄고 감점이 커지며 어려운 사건이 배당되는 대신 평판이 더 오릅니다.','경력 길이를 단기 · 표준 · 장기 · 대장정 가운데 고를 수 있습니다.','사건 배당 방식을 고를 수 있습니다: 점점 어렵게(기본) 또는 무작위. 어느 쪽이든 이전 경력에서 보지 않은 사건을 먼저 배당합니다.','새 경력 화면을 별도 설정 창(선택 카드)으로 바꿨습니다.','배당표에서 한 번 "다른 사건 받기"로 세 사건을 새로 받을 수 있습니다.','업데이트 내역이 옆에서 열리는 창으로 바뀌었습니다. 업데이트 버튼을 다시 누르거나, Esc, 바깥 누르기, ✕, 아래로 끌어내리기로 닫힙니다. 재판 중에도 화면을 잃지 않고 열어 볼 수 있습니다.','나의 판례집: 검색, 난도 구간 필터, 열람한 사건만 보기, 더 보기를 추가했습니다.','막간 이벤트와 업적을 더 추가했습니다.','난이도 분포는 그대로 유지했습니다. 각 사건의 법리·사실관계를 다시 검수해 바로잡았습니다.']},
