@@ -86,6 +86,9 @@ button:focus-visible,.clue:focus-visible,input:focus-visible,select:focus-visibl
 .tname input:focus{outline:2px solid var(--brass);outline-offset:1px}
 .tname #tnok{min-width:3.5em;font-size:12px;color:var(--good,#7fb07f)}
 .overlay .tnhint{font-size:12px;color:var(--muted);margin:0 0 0 2px;max-width:none}
+.moveban{position:sticky;top:0;z-index:46;display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;padding:7px 12px;background:#2a1f12;border-bottom:2px solid var(--brass);color:var(--fg);font-size:13.5px;text-align:center}
+.moveban b{color:var(--brass)}
+.mvurl{margin:6px 0 0;text-align:center;font-size:18px}.mvurl a{color:var(--brass);word-break:break-all}
 .setname{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:6px;font-size:13px;color:var(--muted)}
 .setname input{background:var(--panel-2);border:1px solid var(--line);color:var(--fg);padding:6px 8px;width:8em;font:inherit}
 .sopt input{position:absolute;opacity:0;width:1px;height:1px}
@@ -351,6 +354,39 @@ html.mlock,html.mlock body{overflow:hidden}
  .tab{padding:8px 10px}
  body.trialm{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
  body.trialm .mnav:not([hidden]){display:grid}
+ body.trialm .desk{display:block}
+ body.trialm:not(.mv-stage) .stage>.screen{display:none}
+ body.trialm:not(.mv-stage) .stage>.dialog{display:none}
+ body.trialm.dlg-on:not(.mv-stage) .stage>.dialog{display:grid;position:fixed;left:6px;right:6px;bottom:calc(62px + env(safe-area-inset-bottom,0px));width:auto;max-width:none;z-index:43;max-height:40vh;overflow:auto;box-shadow:0 -4px 0 #00000066,0 6px 18px #000a;cursor:pointer}
+ body.trialm:not(.mv-rec) .desk>.panel:first-child{display:none}
+ body.trialm:not(.mv-bench) #bench{display:none}
+ body.trialm .desk>.panel{min-height:calc(100vh - 150px)}
+ body.trialm.mv-stage .stage{min-height:calc(100vh - 150px);align-content:start}
+ .mnav button{position:relative}
+ /* 판단 화면 압축: 단계 막대는 위에, 이전·다음은 아래에 붙여 둔다 */
+ body.trialm #bench .ph{padding:8px 12px}
+ body.trialm #bench .steps{position:sticky;top:0;z-index:6;background:var(--panel);box-shadow:0 1px 0 var(--line)}
+ body.trialm #bench .step{padding:7px 1px;font-size:12px}
+ body.trialm #bench .nav{position:sticky;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:6;background:var(--panel);padding:8px 10px;box-shadow:0 -1px 0 var(--line)}
+ body.trialm #bench .nav .btn{padding:8px 12px;min-height:40px}
+ body.trialm.dlg-on #bench .nav{visibility:hidden}
+ body.trialm #bbody{padding:10px 12px}
+ body.trialm #bbody>p.hint.clamp{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;cursor:pointer;position:relative;padding-right:2.6em;margin:0 0 8px}
+ body.trialm #bbody>p.hint.clamp::after{content:'더보기';position:absolute;right:0;bottom:0;font-size:11px;color:var(--brass);background:var(--panel);padding-left:4px}
+ body.trialm #bbody>p.hint.clamp.open{display:block;-webkit-line-clamp:unset}
+ body.trialm #bbody>p.hint.clamp.open::after{content:'접기';position:static;margin-left:6px}
+ body.trialm .qgrp{margin-bottom:8px}
+ body.trialm .qgrp h4{margin:0 0 4px;font-size:12px}
+ body.trialm .q{padding:8px 10px;font-size:14px;margin-bottom:4px;line-height:1.45}
+ body.trialm .ev{grid-template-columns:minmax(0,1fr) auto;gap:4px 8px;padding:8px 0}
+ body.trialm .ev .t{display:contents}
+ body.trialm .ev .t>b{grid-column:1/-1;grid-row:1;font-size:14px;line-height:1.4}
+ body.trialm .ev .inbu{grid-column:1/-1;grid-row:2;margin-top:0;font-size:12px}
+ body.trialm .ev .inbu small{font-size:12px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ body.trialm .ev .t>button{grid-column:1;grid-row:3;justify-self:start;align-self:center;padding:6px 0;font-size:12.5px}
+ body.trialm .ev .seg{grid-column:2;grid-row:3;align-self:center}
+ body.trialm .ev .seg button{padding:8px 14px;font-size:14px;min-height:38px}
+ .mnav button.ping::after{content:'';position:absolute;top:5px;right:8px;width:8px;height:8px;border-radius:50%;background:var(--seal)}
  .mnav{position:fixed;left:0;right:0;bottom:0;z-index:44;grid-template-columns:repeat(3,1fr) 56px;background:#0b1112f2;border-top:2px solid #3b2a1d;padding:4px max(6px,env(safe-area-inset-left,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(6px,env(safe-area-inset-right,0px));gap:4px;backdrop-filter:blur(4px)}
  .mnav button{background:var(--panel);border:1px solid var(--line);padding:5px 2px 4px;line-height:1.15;min-height:48px;color:var(--fg)}
  .mnav button b{display:block;font-size:14px}
@@ -25978,9 +26014,10 @@ function resultHTML(){
 const overlay=$('#overlay'),modal=$('#modal');
 const cleanJName=v=>String(v||'').replace(/[<>"'&\\/`]/g,'').replace(/\s+/g,' ').trim().slice(0,6);
 function playerName(){const n=store.get('verdict-name');if(n)return n;const sv=store.get('verdict-save2');return (sv&&sv.name)||''}
-function setPlayerName(v){const n=cleanJName(v);if(!n)return '';store.set('verdict-name',n);const sv=store.get('verdict-save2');if(sv&&sv.history){sv.name=n;store.set('verdict-save2',sv)}if(!S.mode&&S.phase==='title')S.name=n;return n}
+function setPlayerName(v){const n=cleanJName(v);if(!n)return '';const prevN=store.get('verdict-name');store.set('verdict-name',n);if(prevN&&prevN!==n&&typeof resyncSoon==='function')resyncSoon();const sv=store.get('verdict-save2');if(sv&&sv.history){sv.name=n;store.set('verdict-save2',sv)}if(!S.mode&&S.phase==='title')S.name=n;return n}
 const pName=()=>playerName()||'한결';
-function titleScreen(){
+let rsyncBoot=false;
+function titleScreen(){if(!rsyncBoot){rsyncBoot=true;setTimeout(()=>{if(store.get('verdict-rsync')!==dayKey()&&(myRanks().length||store.get('verdict-quiz')))resyncRanks(false)},3000)}
  S.phase='title';S.cs=null;overlay.hidden=false;const sv=store.get('verdict-save2');const pName0=playerName();const canCont=sv&&sv.history&&(sv.history.length>0||sv.cur);
  overlay.innerHTML=`<div><div class="kicker">대한민국 형사법정</div><h2>판결의 무게</h2><p>신임 형사단독 판사로 첫 출근한 날입니다. 기록을 읽고, 신문하고, 법과 판례에 따라 형을 정하세요. 보직마다 정해진 건수를 처리하면 인사 평가를 받습니다. 사건은 모두 ${CASES.length}건입니다.</p>
  <div class="tname"><label for="tname">판사 이름</label><input id="tname" maxlength="6" placeholder="한결" autocomplete="off" value="${pName0.replace(/"/g,'')}"><span class="hint tnhint" id="tnhint">${pName0?'경력과 랭킹에 쓰이는 이름입니다.':'처음이라면 이름부터 정해 주세요.'}</span><span id="tnok" aria-live="polite"></span></div>
@@ -26036,7 +26073,7 @@ function startCase(ci){
  save();renderHud();renderRec();renderBench();
  const c=C();
  const open=[['clerk',`${c.no} ${c.title}. 피고인 ${c.def.name}, 출석하였습니다.`,'gavel'],...c.intro,['clerk','재판장님, 기록을 검토하고 신문을 진행해 주십시오. 이 사건의 신문 기회는 '+S.cs.qMax+'번입니다.']];
- play(open,()=>idle(innerWidth<=820?'아래 기록철을 읽고 판단 절차를 진행하세요. 화면 아래 버튼으로 법정·기록·판단 사이를 오갈 수 있습니다.':'기록철을 읽고 오른쪽 판단 절차를 진행하세요.'));
+ play(open,()=>{idle(innerWidth<=820?'화면 아래 「기록」에서 증거를 읽고, 「판단」에서 신문하고 선고하세요. 신문 답변은 어느 화면에서든 아래에 뜹니다.':'기록철을 읽고 오른쪽 판단 절차를 진행하세요.');if(typeof mping==='function'){mping('rec');mping('bench')}});
  if(!S.tutDone&&S.history.length===0)setTimeout(()=>coach(0),400);
 }
 function nextCase(){sfx('click');if(S.mode==='daily'){dailyEnd();return}if(S.mode==='weekly'){weeklyNext();return}if(S.mode==='dev'&&typeof devList==='function'){devList();return}docket()}
@@ -26385,14 +26422,25 @@ const RANK=(()=>{let mode=null,initP=null,db=null,uid=null;
  async function submit(board,entry){const m=await init();
   if(m==='web'){const r=await fetch('/api/rank',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({board,pid:pid()},entry))});return r.json()}
   if(m==='db'){const ref=db.collection(col(board,board==='career'?entry.len:'')).doc(uid);entry=Object.assign({},entry,{name:String(entry.name||'').replace(/[<>"'&]/g,'').slice(0,6)||'익명'});const cur=await ref.get();const old=cur.exists?cur.data():null;
-   if(board==='career'){const score=Math.round(entry.pts*(RANK_DIFF[entry.diff]||1))+entry.rep/1000;if(!old||old.score<score)await ref.set(Object.assign({},entry,{score,date:dayKey()}));return {ok:true,improved:!old||old.score<score,score}}
-   if(board==='weekly'){const score=entry.score;if(old&&old.week===entry.week&&old.score>=score)return {ok:true,improved:false};await ref.set(Object.assign({},entry,{score}));return {ok:true,improved:true}}
-   if(board==='quiz'){const score=entry.ok*1000+Math.max(0,600-entry.sec);if(old&&old.score>=score)return {ok:true,improved:false};await ref.set(Object.assign({},entry,{score,date:dayKey()}));return {ok:true,improved:true}}
-   if(old&&old.date===entry.date)return {ok:true,first:false};const t=(Date.now()-new Date().setHours(0,0,0,0))/864e5;await ref.set(Object.assign({},entry,{score:entry.score+(1-t)/10,total:entry.score}));return {ok:true,first:true}}
+   const rename=async()=>{if(old&&old.name!==entry.name)await ref.set(Object.assign({},old,{name:entry.name}))};
+   if(board==='career'){const score=Math.round(entry.pts*(RANK_DIFF[entry.diff]||1))+entry.rep/1000;if(!old||old.score<score)await ref.set(Object.assign({},entry,{score,date:dayKey()}));else await rename();return {ok:true,improved:!old||old.score<score,score}}
+   if(board==='weekly'){const score=entry.score;if(old&&old.week===entry.week&&old.score>=score){await rename();return {ok:true,improved:false}}await ref.set(Object.assign({},entry,{score}));return {ok:true,improved:true}}
+   if(board==='quiz'){const score=entry.ok*1000+Math.max(0,600-entry.sec);if(old&&old.score>=score){await rename();return {ok:true,improved:false}}await ref.set(Object.assign({},entry,{score,date:dayKey()}));return {ok:true,improved:true}}
+   if(old&&old.date===entry.date){await rename();return {ok:true,first:false}}const t=(Date.now()-new Date().setHours(0,0,0,0))/864e5;await ref.set(Object.assign({},entry,{score:entry.score+(1-t)/10,total:entry.score}));return {ok:true,first:true}}
   return {ok:false,reason:'offline'}}
  return {init,top,submit,get mode(){return mode}}})();
 function myRanks(){return store.get('verdict-myrank')||[]}
 function addMyRank(e){const L=myRanks();L.push(e);L.sort((a,b)=>b.score-a.score);store.set('verdict-myrank',L.slice(0,30))}
+// 이 기기의 최고 기록을 랭킹에 다시 올린다 (불러오기·이름 변경·주소 이전 뒤). 더 높은 기록만 바뀌고, 이름은 새 이름으로 맞춘다.
+let rsyncBusy=null;
+function resyncRanks(announce){if(rsyncBusy)return rsyncBusy;rsyncBusy=(async()=>{let n=0;try{const m=await RANK.init();if(m==='none')return 0;const nm=pName();
+ const best={};myRanks().forEach(e=>{if(e&&LEN[e.len]&&(!best[e.len]||e.score>best[e.len].score))best[e.len]=e});
+ for(const k in best){const e=best[k];const r=await RANK.submit('career',{len:e.len,name:nm,pts:e.pts,cases:e.cases,rep:e.rep,grade:e.grade??e.rank,diff:e.diff,dock:e.dock});if(r&&r.ok)n++}
+ const qz=store.get('verdict-quiz');if(qz&&qz.ok!=null&&qz.sec!=null){const r=await RANK.submit('quiz',{name:nm,ok:qz.ok,sec:qz.sec});if(r&&r.ok)n++}
+ const wk=store.get('verdict-weekly')||{},wkk=weekKey();if(wk[wkk]!=null){const r=await RANK.submit('weekly',{week:wkk,name:nm,score:wk[wkk]});if(r&&r.ok)n++}
+ const dl=store.get('verdict-daily')||{},dk=dayKey();if(dl[dk]!=null){const r=await RANK.submit('daily',{date:dk,name:nm,score:dl[dk],no:''});if(r&&r.ok)n++}
+ store.set('verdict-rsync',dayKey());if(announce&&n)toast('랭킹 기록도 이 기기에 맞춰 반영했습니다')}catch(e){}return n})().finally(()=>{setTimeout(()=>{rsyncBusy=null},0)});return rsyncBusy}
+let rsyncT=0;function resyncSoon(){clearTimeout(rsyncT);rsyncT=setTimeout(()=>resyncRanks(false),1500)}
 function careerRankEntry(){const pts=careerPts();return {len:S.len||'normal',name:S.name,pts,cases:S.history.length,rep:Math.round(S.rep),grade:S.rank,diff:S.diff||'normal',dock:S.dock||'prog'}}
 async function submitCareerRank(){if(S.mode)return;const e=careerRankEntry();const score=Math.round(e.pts*(RANK_DIFF[e.diff]||1));addMyRank(Object.assign({},e,{score,date:dayKey()}));
  const el=document.getElementById('erank');if(el)el.textContent='랭킹에 등록하는 중…';
@@ -26428,34 +26476,51 @@ async function showRanking(onClose){const tabs=[['career','경력'],['daily','�
   else{const k=dayKey();const r=await RANK.top('daily',k);const di=dailyInfo();
    body.innerHTML=`<p style="margin:0 0 8px"><b>${di.label}</b> · ${esc(di.c.title)}</p>`+tbl(r.top,[['순위',x=>x.rank],['이름',x=>esc(x.name)],['점수',x=>'<b>'+(x.total!=null?x.total:Math.floor(x.score))+'</b>']])+(r.me&&!r.top.some(x=>x.me)?`<p class="hint">내 순위: ${r.me.rank?r.me.rank+'위':'50위 밖'}</p>`:'')}}
  catch(e){body.innerHTML='<p class="hint">랭킹을 불러오지 못했습니다. 잠시 뒤 다시 시도해 주세요.</p>'}}
-/* ── 모바일 화면 이동 ── */
+/* ── 모바일 화면 이동: 법정 · 기록 · 판단을 탭으로 나눠 한 번에 하나만 보여 준다 ── */
 const MOB=()=>innerWidth<=820;
 const MNAV={stage:()=>document.querySelector('.stage'),rec:()=>document.querySelector('.desk>.panel'),bench:()=>$('#bench'),top:()=>document.body};
-function goTo(el,smooth=true){if(!el)return;const hdr=0;const y=el===document.body?0:Math.max(0,el.getBoundingClientRect().top+scrollY-8-hdr);scrollTo({top:y,behavior:smooth&&!reduce?'smooth':'auto'})}
-function mnavSync(){const nav=$('#mnav');if(!nav)return;const on=S.phase==='trial'&&!!S.cs;document.body.classList.toggle('trialm',on);nav.hidden=!on;if(!on)return;
- const mid=innerHeight*.35;let cur='stage';['stage','rec','bench'].forEach(k=>{const e=MNAV[k]();if(e&&e.getBoundingClientRect().top<=mid)cur=k});
- nav.querySelectorAll('[data-go]').forEach(b=>b.classList.toggle('on',b.dataset.go===cur))}
-$('#mnav').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;sfx('click');b.classList.remove('ping');goTo(MNAV[b.dataset.go]())});
-addEventListener('scroll',()=>{if(MOB())mnavSync()},{passive:true});addEventListener('resize',mnavSync);
+let MV='stage';const MVpos={};
+function goTo(el,smooth=true){if(!el)return;const y=el===document.body?0:Math.max(0,el.getBoundingClientRect().top+scrollY-8);scrollTo({top:y,behavior:smooth&&!reduce?'smooth':'auto'})}
+function setView(v,opt={}){if(!['stage','rec','bench'].includes(v))return;const same=v===MV;
+ if(!same&&MOB()&&document.body.classList.contains('trialm'))MVpos[MV]=scrollY;
+ MV=v;['stage','rec','bench'].forEach(k=>document.body.classList.toggle('mv-'+k,k===v));
+ const nav=$('#mnav');if(nav){nav.querySelectorAll('[data-go]').forEach(b=>{b.classList.toggle('on',b.dataset.go===v);b.setAttribute('aria-pressed',b.dataset.go===v);if(b.dataset.go===v)b.classList.remove('ping')})}
+ if(MOB()&&!same){let y;if(opt.top)y=0;else if(MVpos[v]!=null)y=MVpos[v];else{const el=MNAV[v]();y=el?Math.max(0,el.getBoundingClientRect().top+scrollY-8):0}scrollTo({top:y,behavior:'auto'})}}
+function mping(v){if(v===MV||!MOB())return;const b=document.querySelector(`#mnav [data-go="${v}"]`);if(b)b.classList.add('ping')}
+let mnavCase=null;
+function mnavSync(){const nav=$('#mnav');if(!nav)return;const on=S.phase==='trial'&&!!S.cs;document.body.classList.toggle('trialm',on);nav.hidden=!on;
+ if(!on){mnavCase=null;return}
+ if(mnavCase!==S.ci){mnavCase=S.ci;Object.keys(MVpos).forEach(k=>delete MVpos[k]);nav.querySelectorAll('.ping').forEach(b=>b.classList.remove('ping'));setView('stage',{top:true});MV='stage'}
+ else setView(MV)}
+$('#mnav').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;sfx('click');
+ if(b.dataset.go==='top'){scrollTo({top:0,behavior:reduce?'auto':'smooth'});return}
+ if(b.dataset.go===MV){scrollTo({top:0,behavior:reduce?'auto':'smooth'});return}
+ setView(b.dataset.go)});
+addEventListener('resize',mnavSync);
 // 모달·서랍이 열리면 뒤 화면이 따라 움직이지 않게, 새 내용은 맨 위부터
 new MutationObserver(ms=>{const open=!modal.hidden||updOpen;document.documentElement.classList.toggle('mlock',open&&MOB());
  if(ms.some(m=>m.type==='childList'||m.attributeName==='hidden')){if(modal._keep){modal._keep=false}else modal.scrollTop=0}}).observe(modal,{childList:true,attributes:true,attributeFilter:['hidden']});
-// 대사가 시작되면 대화창을 보여 주고, 끝나면 보던 자리로 돌아간다 (모바일)
-{const _play=play;let back=null;
- play=function(lines,done){if(MOB()&&S.phase==='trial'){const dg=$('#dialog'),r=dg.getBoundingClientRect();if(r.top<0||r.bottom>innerHeight-70){if(back==null)back=scrollY;goTo(document.querySelector('.stage'))}}
-  return _play(lines,function(){const r=done&&done.apply(this,arguments);if(back!=null&&MOB()&&S.phase==='trial'&&!busy){const y=back;back=null;setTimeout(()=>{if(S.cs&&S.cs.result)goTo($('#bench'));else scrollTo({top:y,behavior:reduce?'auto':'smooth'})},120)}else if(!busy&&MOB()&&S.cs&&S.cs.result){setTimeout(()=>goTo($('#bench')),120)}else if(!busy)back=null;return r})}}
-// 판단 단계를 바꾸면 판단 패널 맨 위로 (모바일)
+// 대사가 나오는 동안 기록·판단 탭에서는 대사창을 화면 아래에 띄운다 (화면은 그대로)
+{let wasTalking=false;new MutationObserver(()=>{const talk=!nextEl.hidden&&S.phase==='trial';document.body.classList.toggle('dlg-on',talk);
+  if(wasTalking&&!talk&&S.cs&&!S.cs.result&&MV==='stage')mping('bench');wasTalking=talk}).observe(nextEl,{attributes:true,attributeFilter:['hidden']})}
+// 판단 단계를 바꾸면 판단 패널 맨 위로, 선고 결과가 나오면 판단 탭으로 (모바일)
 {const _rb=renderBench;let lastStep=null,lastCase=null,lastRes=false;
- renderBench=function(){_rb.apply(this,arguments);if(!S.cs){lastStep=null;mnavSync();return}
-  const key=S.ci+':'+S.cs.step;if(MOB()&&lastCase===S.ci&&lastStep!==S.cs.step){const b=$('#bench');if(b&&b.getBoundingClientRect().top<0)goTo(b)}
-  const hasRes=!!S.cs.result;if(MOB()&&hasRes&&!lastRes){const b=$('#bench');setTimeout(()=>goTo(b),60)}lastRes=hasRes;
-  lastStep=S.cs.step;lastCase=S.ci;mnavSync()}}
+ renderBench=function(){_rb.apply(this,arguments);if(!S.cs){lastStep=null;lastRes=false;mnavSync();return}
+  mnavSync();
+  if(MOB())document.querySelectorAll('#bbody>p.hint').forEach(h=>{if(!h.getAttribute('style')&&!h.querySelector('b,strong,span[style],button')&&h.textContent.length>60)h.classList.add('clamp')});
+  if(MOB()&&lastCase===S.ci&&lastStep!==S.cs.step&&MV==='bench'){const b=$('#bench');if(b&&b.getBoundingClientRect().top<0)goTo(b,false)}
+  const hasRes=!!S.cs.result;if(MOB()&&hasRes&&!lastRes&&lastCase===S.ci){setView('bench');setTimeout(()=>goTo($('#bench'),false),30)}lastRes=hasRes&&lastCase===S.ci||hasRes;
+  lastStep=S.cs.step;lastCase=S.ci}}
+$('#bench').addEventListener('click',e=>{const h=e.target.closest('#bbody>p.hint.clamp');if(h)h.classList.toggle('open')});
 // 기록을 바꾸면 기록 맨 위가 보이게 (모바일)
-rec.addEventListener('click',e=>{if(!MOB())return;if(e.target.closest('[data-doc]')){const p=document.querySelector('.desk>.panel');setTimeout(()=>{if(p.getBoundingClientRect().top<0)goTo(p)},0)}});
-document.querySelectorAll('.tab[data-tab]').forEach(t=>t.addEventListener('click',()=>{if(!MOB())return;const p=document.querySelector('.desk>.panel');setTimeout(()=>{if(p.getBoundingClientRect().top<0)goTo(p)},0)}));
+rec.addEventListener('click',e=>{if(!MOB())return;if(e.target.closest('[data-doc]')){const p=document.querySelector('.desk>.panel');setTimeout(()=>{if(p.getBoundingClientRect().top<0)goTo(p,false)},0)}});
+document.querySelectorAll('.tab[data-tab]').forEach(t=>t.addEventListener('click',()=>{if(!MOB())return;const p=document.querySelector('.desk>.panel');setTimeout(()=>{if(p.getBoundingClientRect().top<0)goTo(p,false)},0)}));
+// 안내(튜토리얼)가 가리키는 곳의 탭으로 바꾼다
+{const _coach=coach;coach=function(i){const st=COACH[i];if(st&&MOB()&&S.phase==='trial'){const el=document.querySelector(st.sel);if(el){if(el.closest('.stage'))setView('stage');else if(el.closest('#bench'))setView('bench');else if(el.closest('.desk>.panel'))setView('rec')}}return _coach.apply(this,arguments)}}
+setView('stage');
 /* ── 업데이트 내역 ── */
 const CHANGELOG=[
- {v:'2.7',d:'2026. 10. 16.',t:'랭킹 · 주간 챌린지 · 증거 퀴즈',items:['랭킹이 생겼습니다. 처음 화면과 위쪽의 랭킹 버튼에서 경력·오늘의 사건·주간 챌린지·증거 퀴즈 순위와 내 기록을 볼 수 있습니다. 경력은 징계 없이 끝까지 마치면 경력 길이별로 등록되고, 오늘의 사건은 그날 첫 도전만 올라갑니다.','새 콘텐츠 「주간 챌린지」: 매주 월요일 중대 사건 3건이 정해집니다. 모두 같은 사건을 어려움 난이도로 이어서 심리하고 합계 점수로 겨룹니다. 경력과 평판에는 영향이 없습니다.','새 콘텐츠 「증거 퀴즈」: 여러 사건에서 뽑은 증거와 상대방 의견을 보고 채택할지 배제할지 연달아 고르는 짧은 연습입니다. 답을 고르면 바로 이유가 나옵니다.','온라인 랭킹 서버가 있는 배포판을 따로 준비했습니다. 연결되지 않은 곳에서는 이 기기 기록만 보입니다.','새 업적이 추가되었습니다.','처음 화면에서 판사 이름을 바로 정하고 언제든 바꿀 수 있습니다. 경력·오늘의 사건·주간 챌린지·증거 퀴즈와 랭킹에 같은 이름이 쓰입니다.']},
+ {v:'2.7',d:'2026. 10. 16.',t:'랭킹 · 주간 챌린지 · 증거 퀴즈',items:['랭킹이 생겼습니다. 처음 화면과 위쪽의 랭킹 버튼에서 경력·오늘의 사건·주간 챌린지·증거 퀴즈 순위와 내 기록을 볼 수 있습니다. 경력은 징계 없이 끝까지 마치면 경력 길이별로 등록되고, 오늘의 사건은 그날 첫 도전만 올라갑니다.','새 콘텐츠 「주간 챌린지」: 매주 월요일 중대 사건 3건이 정해집니다. 모두 같은 사건을 어려움 난이도로 이어서 심리하고 합계 점수로 겨룹니다. 경력과 평판에는 영향이 없습니다.','새 콘텐츠 「증거 퀴즈」: 여러 사건에서 뽑은 증거와 상대방 의견을 보고 채택할지 배제할지 연달아 고르는 짧은 연습입니다. 답을 고르면 바로 이유가 나옵니다.','온라인 랭킹 서버가 있는 배포판을 따로 준비했습니다. 연결되지 않은 곳에서는 이 기기 기록만 보입니다.','새 업적이 추가되었습니다.','휴대폰 화면을 법정 · 기록 · 판단 세 화면으로 나눴습니다. 아래 버튼으로 바꾸면 화면이 위아래로 튀지 않고 바로 넘어가며, 각 화면에서 보던 위치가 그대로 남습니다. 신문 답변 같은 대사는 지금 보는 화면 아래에 떠서 화면을 옮길 필요가 없습니다. 새로 볼 것이 생긴 화면에는 점이 표시됩니다.','휴대폰 판단 화면을 줄였습니다. 단계 막대는 위에, 이전·다음 버튼은 아래에 붙어 있어 끝까지 내리지 않아도 넘어갈 수 있고, 증거 채부는 한 증거가 한눈에 들어오게 정리했습니다. 긴 설명은 두 줄만 보이고 누르면 펼쳐집니다.','저장 코드와 주소 이전에 랭킹 기록이 함께 담깁니다. 불러오면 같은 사람으로 이어지고, 이 기기의 최고 기록이 랭킹에 반영됩니다. 이름을 바꾸면 랭킹의 이름도 바뀝니다.','처음 화면에서 판사 이름을 바로 정하고 언제든 바꿀 수 있습니다. 경력·오늘의 사건·주간 챌린지·증거 퀴즈와 랭킹에 같은 이름이 쓰입니다.']},
  {v:'2.6',d:'2026. 10. 15.',t:'증거 인부 · 재범 위험성 · 중형 사건',items:['증거 채부 단계에서 증거마다 상대방 의견(인부)이 보입니다. 검사가 낸 증거에는 피고인·변호인 의견(동의, 부동의, 내용 부인, 위법수집 주장, 임의성 다툼, 증명력 다툼 등)이, 피고인 측이 낸 증거에는 검사 의견이 붙습니다. 기록 열람 화면, 선고 결과, 판례집에도 표시됩니다.','인부와 증거능력은 다릅니다. 상대방이 다투지만 실제로는 증거능력이 있는 함정 증거를 크게 늘렸습니다. 공문서·업무 문서(제315조), 임의제출 영상, 영장으로 받은 자료, 대화 당사자의 녹음 등이 대표적입니다. 틀리면 결과 화면에 "인부 판단" 이유가 나옵니다.','새 양형 인자: 재범 위험성 높음(일반가중), 재범 위험성 낮음(일반감경). 여러 사건에 기록 근거와 함께 정답 인자로 들어갔고, 누범·전과를 두 번 세는 함정도 있습니다.','무거운 형이 정답인 중대 사건을 늘렸습니다. 합의부(보험금 살인, 강도살인, 연쇄 방화치사, 보복살인 등)와 항소심에 새 사건이 들어왔습니다.','법원별 형 쏠림을 완화했습니다. 항소심·합의부에서 벌금도 정답으로 인정되는 사건이 늘었고, 단독 벌금 사건 일부는 징역 집행유예도 정답으로 인정합니다.','대법정 난이도에서는 인부 의견 문구 없이 결과만 보입니다.','증거 채부가 어려워진 만큼 인사 기준과 평판 상승을 조금 완화했습니다.','증거 설명이 법리상 부족했던 곳과 새 사건 검수에서 찾은 오류를 바로잡았습니다.']},
  {v:'2.5',d:'2026. 10. 15.',t:'모바일 화면 이동',items:['휴대폰에서 재판 중 화면 아래에 이동 버튼(법정 · 기록 · 판단 · 위로)이 생겼습니다. 누르면 그 위치로 바로 이동하고, 지금 보고 있는 곳이 표시됩니다.','신문하면 대사창으로 자동 이동하고, 대사가 끝나면 보던 판단 화면으로 돌아옵니다. 이의 결정이나 선고 결과도 바로 보이는 곳으로 이동합니다.','판단 단계를 바꾸면 판단 절차 맨 위로 이동합니다.','창(배당표·판례집·설정 등)을 열면 뒤 화면이 따라 움직이지 않고, 새 창은 항상 맨 위부터 보입니다.','휴대폰에서 위쪽 메뉴·평판 정보·사건 정보를 한 줄로 줄여 화면을 넓게 쓰도록 했습니다. 옆으로 밀면 나머지가 보입니다.']},
  {v:'2.4',d:'2026. 10. 15.',t:'사건 대폭 확장 · 새 경력 설정',items:['사건을 크게 늘렸습니다. 새 사건은 생활 범죄·교통·온라인·노동·식품의료·강도·살인·방화·경제·마약·보이스피싱·뇌물·산재·증거법·항소심 쟁점별로 나눠 썼고, 복합 범죄 사건도 늘었습니다.','난이도를 수습 · 표준 · 원로 · 대법정으로 바꿨습니다. 어려울수록 신문 기회가 줄고 감점이 커지며 어려운 사건이 배당되는 대신 평판이 더 오릅니다.','경력 길이를 단기 · 표준 · 장기 · 대장정 가운데 고를 수 있습니다.','사건 배당 방식을 고를 수 있습니다: 점점 어렵게(기본) 또는 무작위. 어느 쪽이든 이전 경력에서 보지 않은 사건을 먼저 배당합니다.','새 경력 화면을 별도 설정 창(선택 카드)으로 바꿨습니다.','배당표에서 한 번 "다른 사건 받기"로 세 사건을 새로 받을 수 있습니다.','업데이트 내역이 옆에서 열리는 창으로 바뀌었습니다. 업데이트 버튼을 다시 누르거나, Esc, 바깥 누르기, ✕, 아래로 끌어내리기로 닫힙니다. 재판 중에도 화면을 잃지 않고 열어 볼 수 있습니다.','나의 판례집: 검색, 난도 구간 필터, 열람한 사건만 보기, 더 보기를 추가했습니다.','막간 이벤트와 업적을 더 추가했습니다.','난이도 분포는 그대로 유지했습니다. 각 사건의 법리·사실관계를 다시 검수해 바로잡았습니다.']},
@@ -26510,7 +26575,7 @@ $('#saveBtn').onclick=()=>{audioInit();if(lockModal)return;sfx('click');saveMana
 $('#rankBtn').onclick=()=>{audioInit();if(lockModal)return;sfx('page');updClose();const back=S.phase==='title'?()=>titleScreen():null;showRanking(back)};
 
 /* ── 저장 코드: 이 브라우저의 저장 데이터를 글자 한 줄로 바꿔 다른 기기로 옮긴다 ── */
-const SAVE_KEYS=['verdict-save2','verdict-ach','verdict-seen','verdict-best','verdict-audio','verdict-daily','verdict-bestcase','verdict-gstats'];
+const SAVE_KEYS=['verdict-save2','verdict-ach','verdict-seen','verdict-best','verdict-audio','verdict-daily','verdict-bestcase','verdict-gstats','verdict-pid','verdict-name','verdict-myrank','verdict-weekly','verdict-quiz'];
 function b64u(bytes){let bin='';for(let i=0;i<bytes.length;i+=8192)bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));return btoa(bin).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
 function unb64u(t){t=t.replace(/-/g,'+').replace(/_/g,'/');while(t.length%4)t+='=';const bin=atob(t),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);return a}
 function fnv(t){let h=0x811c9dc5;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(36).padStart(7,'0')}
@@ -26542,6 +26607,13 @@ function applyImport(data){
  const mergeMax=k=>{const a=store.get(k)||{},b=data[k]||{};for(const x in b)a[x]=typeof b[x]==='number'?Math.max(a[x]||0,b[x]):b[x];store.set(k,a)};mergeMax('verdict-daily');mergeMax('verdict-bestcase');mergeMax('verdict-gstats');
  store.set('verdict-best',Math.max(store.get('verdict-best')||0,data['verdict-best']||0));
  if(data['verdict-audio'])store.set('verdict-audio',data['verdict-audio']);
+ // 랭킹 기록: 같은 사람으로 이어지도록 랭킹 식별값·이름·개인 최고 기록을 함께 옮긴다
+ mergeMax('verdict-weekly');
+ {const a=store.get('verdict-quiz'),b=data['verdict-quiz'];if(b&&b.score!=null&&(!a||!(a.score>=b.score)))store.set('verdict-quiz',b)}
+ {const seenR=new Set(),L=[...myRanks(),...(Array.isArray(data['verdict-myrank'])?data['verdict-myrank']:[])].filter(e=>{if(!e||typeof e.score!=='number')return false;const k=[e.len,e.score,e.date,e.pts].join('|');if(seenR.has(k))return false;seenR.add(k);return true});L.sort((x,y)=>y.score-x.score);store.set('verdict-myrank',L.slice(0,30))}
+ if(typeof data['verdict-pid']==='string'&&/^[a-z0-9]{12,40}$/.test(data['verdict-pid']))store.set('verdict-pid',data['verdict-pid']);
+ {const nm=cleanJName(data['verdict-name']||(sv&&sv.name)||'');if(nm)store.set('verdict-name',nm)}
+ setTimeout(()=>resyncRanks(true),400);
  clearTimeout(saveT);clearInterval(typing);typing=null;busy=false;dq=[];di=0;dDone=null;if(coachEl)coachEnd();
  modal.hidden=true;
  if(sv&&sv.history&&(sv.history.length||sv.cur)){loadSave(store.get('verdict-save2'));toast('다른 기기의 진행을 불러왔습니다')}
@@ -26552,6 +26624,38 @@ function summary(data){const sv=data['verdict-save2'];const when=new Date(data.a
  const ach=(data['verdict-ach']||[]).length,seen=(data['verdict-seen']||[]).length;
  if(!sv||!sv.history)return `<b>진행 중인 경력 없음</b><br>업적 ${ach}개 · 경험한 사건 ${seen}건<br><small>만든 시각 ${t}</small>`;
  return `<b>판사 ${sv.name||''}</b> · ${RANKS[sv.rank||0]}<br>${sv.history.length}건 선고${sv.cur?' · 재판 진행 중':''} · 평판 ${Math.round(sv.rep||0)} · 중대 오판 ${sv.grave||0}<br>업적 ${ach}개 · 경험한 사건 ${seen}건<br><small>만든 시각 ${t}</small>`}
+/* ── 주소 이전 안내 (Netlify → Vercel) ── */
+const MOVE_URL='https://verdictgame.vercel.app/';
+const isOldHost=()=>/\.netlify\.app$/i.test(location.hostname)||/[?&]movenotice=1/.test(location.search);
+function moveBanner(){if(!isOldHost()||$('#moveban'))return;const d=document.createElement('div');d.id='moveban';d.className='moveban';d.setAttribute('role','status');
+ d.innerHTML=`<span><b>새 주소로 옮겼습니다</b> · verdictgame.vercel.app</span><button class="btn sm primary" id="mvgo">옮겨 가기</button>`;document.body.prepend(d);
+ d.querySelector('#mvgo').onclick=()=>{sfx('click');moveModal()}}
+function moveModal(){const hasData=SAVE_KEYS.some(k=>store.get(k)!=null);const sv=store.get('verdict-save2');
+ modal.hidden=false;modal.innerHTML=`<div class="card" role="dialog" aria-modal="true" aria-label="주소 이전 안내"><div class="ch"><h3>새 주소로 옮겼습니다</h3><span>공지</span></div><div class="cb">
+ <p style="margin:0 0 8px">「판결의 무게」가 새 주소로 이사했습니다. 앞으로 업데이트와 <b>온라인 랭킹</b>은 새 주소에서만 제공됩니다.</p>
+ <p class="mvurl"><a href="${MOVE_URL}" target="_top" rel="noopener">verdictgame.vercel.app</a></p>
+ <p class="hint" style="margin:8px 0 0">${hasData?`이 주소에 쌓인 진행${sv&&sv.name?`(판사 ${String(sv.name).replace(/[<>&"]/g,'')}`+(sv.history?` · ${sv.history.length}건 선고`:'')+')':''}은 새 주소로 자동으로 넘어가지 않습니다. 아래 <b>진행 가지고 옮겨 가기</b>를 누르면 경력·업적·사건 도감을 그대로 가져갑니다.`:'이 브라우저에는 아직 진행이 없습니다. 바로 새 주소로 가시면 됩니다.'}</p>
+ <p class="hint" id="mvmsg" style="margin:6px 0 0"></p></div>
+ <div class="cf"><button class="btn" id="mvlater">나중에</button><span style="display:flex;gap:6px;flex-wrap:wrap">${hasData?'<button class="btn" id="mvplain">진행 없이 이동</button><button class="btn primary" id="mvcarry">진행 가지고 옮겨 가기</button>':'<button class="btn primary" id="mvplain">새 주소로 이동</button>'}</span></div></div>`;
+ const $m=q=>modal.querySelector(q);
+ $m('#mvlater').onclick=()=>{sfx('click');try{sessionStorage.setItem('verdict-move-later','1')}catch(e){}modal.hidden=true};
+ $m('#mvplain').onclick=()=>{sfx('click');location.href=MOVE_URL};
+ if($m('#mvcarry'))$m('#mvcarry').onclick=async()=>{sfx('gavel');$m('#mvmsg').textContent='진행을 꾸리는 중…';try{const {code}=await makeCode();location.href=MOVE_URL+'#import='+code}catch(e){$m('#mvmsg').textContent='진행을 꾸리지 못했습니다. 저장 · 옮기기에서 저장 코드를 만들어 새 주소에 붙여 넣어 주세요.'}};
+ ($m('#mvcarry')||$m('#mvplain')).focus()}
+// 이전 주소에서 넘어온 진행 받기
+async function moveReceive(){const m=location.hash.match(/^#import=(PGM[01]\.[A-Za-z0-9_-]+\.[0-9a-z]{7})/);if(!m)return false;
+ try{history.replaceState(null,'',location.pathname+location.search)}catch(e){}
+ let data;try{data=await readCode(m[1])}catch(e){toast('넘어온 진행을 읽지 못했습니다');return true}
+ const cur=store.get('verdict-save2');const curHas=cur&&cur.history&&(cur.history.length||cur.cur);
+ modal.hidden=false;modal.innerHTML=`<div class="card" role="dialog" aria-modal="true" aria-label="진행 불러오기"><div class="ch"><h3>이전 주소의 진행</h3><span>새 주소에 오신 것을 환영합니다</span></div><div class="cb">
+ <p style="margin:0 0 8px">이전 주소에서 가져온 진행입니다. 불러올까요?</p><div class="pv">${summary(data)}</div>
+ ${curHas?`<p class="hint" style="margin:8px 0 0;color:var(--hot)">이 주소에도 이미 진행 중인 경력(${cur.history.length}건 선고)이 있습니다. 불러오면 그 경력은 가져온 진행으로 바뀝니다. 업적과 사건 도감은 합쳐집니다.</p>`:''}</div>
+ <div class="cf"><button class="btn" id="mrno">불러오지 않기</button><button class="btn primary" id="mrok">불러오기</button></div></div>`;
+ modal.querySelector('#mrok').focus();
+ modal.querySelector('#mrno').onclick=()=>{sfx('click');modal.hidden=true};
+ modal.querySelector('#mrok').onclick=()=>{sfx('gavel');const nm=data['verdict-save2']&&data['verdict-save2'].name;applyImport(data);if(nm&&!store.get('verdict-name'))store.set('verdict-name',String(nm).replace(/[<>"'&]/g,'').slice(0,6));if(S.phase==='title')titleScreen()};
+ return true}
+async function moveBoot(){if(await moveReceive())return;if(!isOldHost())return;moveBanner();let later=false;try{later=sessionStorage.getItem('verdict-move-later')==='1'}catch(e){}if(!later&&modal.hidden)moveModal()}
 function saveManager(focus){
  const inGame=S.phase==='trial'||S.phase==='docket';
  if(inGame)save();
@@ -26614,7 +26718,7 @@ setAudioUI();
   if(!ready&&p>98&&el>1300){ready=true;L.classList.add('ready');$('#ltap').hidden=false}
   raf=requestAnimationFrame(frame)}
  raf=requestAnimationFrame(frame);
- const go=()=>{if(!ready)return;cancelAnimationFrame(raf);audioInit();if(AU.bgmOn)bgmStart();sfx('gavel');L.hidden=true;titleScreen()};
+ const go=()=>{if(!ready)return;cancelAnimationFrame(raf);audioInit();if(AU.bgmOn)bgmStart();sfx('gavel');L.hidden=true;titleScreen();setTimeout(moveBoot,350)};
  L.addEventListener('click',go);document.addEventListener('keydown',e=>{if(!L.hidden&&(e.key==='Enter'||e.key===' ')){e.preventDefault();go()}});
 })();
 renderHud();renderRec();renderBench();

@@ -98,6 +98,14 @@ async function topList(zkey, hkey, pid) {
   return { top, me, total };
 }
 
+// 기록은 그대로 두고 이름만 새 이름으로 맞춘다
+async function renameIfNeeded(hkey, pid, name) {
+  const [raw] = await redis([['HGET', hkey, pid]]);
+  if (!raw) return;
+  let e = {};
+  try { e = JSON.parse(raw); } catch {}
+  if (e.name !== name) { e.name = name; await redis([['HSET', hkey, pid, JSON.stringify(e)]]); }
+}
 // 더 높은 점수일 때만 바꾼다
 async function keepBest(zkey, hkey, pid, score, detail, ttl) {
   const [prev] = await redis([['ZSCORE', zkey, pid]]);
@@ -107,6 +115,8 @@ async function keepBest(zkey, hkey, pid, score, detail, ttl) {
     const cmds = [['ZADD', zkey, score, pid], ['HSET', hkey, pid, JSON.stringify(detail)]];
     if (ttl) cmds.push(['EXPIRE', zkey, ttl], ['EXPIRE', hkey, ttl]);
     await redis(cmds);
+  } else if (prev !== null) {
+    await renameIfNeeded(hkey, pid, detail.name);
   }
   const [rk] = await redis([['ZREVRANK', zkey, pid]]);
   return { ok: true, improved, rank: rk === null ? null : Number(rk) + 1, score };
@@ -167,6 +177,8 @@ export default async function handler(req, res) {
             ['ZADD', zkey, score, pid],
             ['HSET', hkey, pid, JSON.stringify({ name, pts, rep, grade, diff, cases, date: kstDay() })],
           ]);
+        } else {
+          await renameIfNeeded(hkey, pid, name);
         }
         const [rk] = await redis([['ZREVRANK', zkey, pid]]);
         return send(res, 200, { ok: true, improved, rank: rk === null ? null : Number(rk) + 1, score });
@@ -185,6 +197,7 @@ export default async function handler(req, res) {
           ['EXPIRE', zkey, 60 * 60 * 24 * 14],
         ]);
         if (added) await redis([['HSET', hkey, pid, JSON.stringify({ name, total: s, no: String(b.no || '').slice(0, 20) })], ['EXPIRE', hkey, 60 * 60 * 24 * 14]]);
+        else await renameIfNeeded(hkey, pid, name);
         const [rk] = await redis([['ZREVRANK', zkey, pid]]);
         return send(res, 200, { ok: true, first: !!added, rank: rk === null ? null : Number(rk) + 1 });
       }
