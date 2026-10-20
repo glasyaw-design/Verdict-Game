@@ -3,7 +3,9 @@
 이 폴더를 그대로 Vercel 프로젝트로 올리면 게임과 온라인 랭킹이 함께 동작합니다.
 
 ```
-index.html          게임 (파일 하나)
+index.html          게임 본체
+data.js             사건 데이터 (처음 한 번 내려받고 브라우저에 저장)
+art/                시나리오 표지·결말 그림
 api/rank.js         랭킹 서버 (Vercel 서버리스 함수, 추가 설치 없음)
 package.json        함수 설정 (ESM)
 vercel.json         캐시 설정
@@ -22,7 +24,8 @@ favicon.png · apple-touch-icon.png · og-image.jpg
 4. 게임의 **랭킹** 창 오른쪽 위에 "온라인 랭킹"이 보이면 연결된 것입니다. 저장소를 연결하지 않으면 "이 기기 기록만"으로 동작합니다(게임은 정상).
 
 ## 3. 업데이트할 때
-- GitHub 저장소의 `index.html`(필요하면 `api/rank.js`)만 새 파일로 바꿔 올리면 같은 주소로 자동 재배포됩니다.
+- 새 zip의 `index.html`, `data.js`, `art/` 폴더를 모두 바꿔 올리세요(필요하면 `api/rank.js`도). 같은 주소로 자동 재배포됩니다.
+- `index.html`만 바꾸고 `data.js`를 그대로 두면 사건이 맞지 않아 게임이 열리지 않으니, 세 가지를 꼭 함께 올리세요.
 - CLI를 쓴다면 이 폴더에서 `npx vercel --prod`.
 
 ## 랭킹 규칙
