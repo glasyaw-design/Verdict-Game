@@ -10,6 +10,7 @@
 //                 {board:'daily', date, pid, name, score, no}      (첫 도전만)
 //                 {board:'weekly', week, pid, name, score}         (이번 주 최고 기록)
 //                 {board:'quiz', pid, name, ok, sec}               (최고 기록)
+//                 {board:'const', pid, name, score, n, perfect}    (헌법재판소 총점, 최고 기록)
 
 const URL_ = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || '';
 const TOKEN = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN || '';
@@ -144,6 +145,9 @@ export default async function handler(req, res) {
       if (q.board === 'quiz') {
         return send(res, 200, { ok: true, ...(await topList('vr:qz', 'vr:qzd', pid)) });
       }
+      if (q.board === 'const') {
+        return send(res, 200, { ok: true, ...(await topList('vr:cs', 'vr:csd', pid)) });
+      }
       return send(res, 400, { ok: false, reason: 'bad_board' });
     }
     if (req.method === 'POST') {
@@ -213,6 +217,12 @@ export default async function handler(req, res) {
         if (ok === null || sec === null) return send(res, 400, { ok: false, reason: 'bad_values' });
         const score = ok * 1000 + Math.max(0, 600 - sec);
         return send(res, 200, await keepBest('vr:qz', 'vr:qzd', pid, score, { name, ok, sec, date: kstDay() }, 0));
+      }
+      if (b.board === 'const') {
+        const total = int(b.score, 0, 10000), n = int(b.n, 0, 100), perfect = int(b.perfect, 0, 100);
+        if (total === null || n === null || perfect === null || total > n * 100 || perfect > n) return send(res, 400, { ok: false, reason: 'bad_values' });
+        const score = total * 100 + perfect;
+        return send(res, 200, await keepBest('vr:cs', 'vr:csd', pid, score, { name, total, n, perfect, date: kstDay() }, 0));
       }
       return send(res, 400, { ok: false, reason: 'bad_board' });
     }
